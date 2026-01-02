@@ -73,40 +73,47 @@ async function buscarDados() {
 function preencherFiltrosDinâmicos(dados) {
     const selectClass = document.getElementById("filtro-classificacao");
     const selectPessoa = document.getElementById("filtro-pessoa");
-    if(!selectClass || !selectPessoa) return;
+    const selectEmpresa = document.getElementById("filtro-empresa"); // Novo
 
     selectClass.innerHTML = '<option value="">Todas</option>';
     selectPessoa.innerHTML = '<option value="">Todas</option>';
+    selectEmpresa.innerHTML = '<option value="">Todas</option>'; // Novo
 
     const classificacoes = new Set();
     const pessoas = new Set();
+    const empresas = new Set(); // Novo
 
     dados.forEach(item => {
         const nomeClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
         if (nomeClass) classificacoes.add(nomeClass);
         if (item.nomePessoa) pessoas.add(item.nomePessoa);
+        if (item.nomeEmpresa) empresas.add(item.nomeEmpresa); // Novo
     });
 
-    Array.from(classificacoes).sort().forEach(c => {
-        selectClass.innerHTML += `<option value="${c}">${c}</option>`;
-    });
-    Array.from(pessoas).sort().forEach(p => {
-        selectPessoa.innerHTML += `<option value="${p}">${p}</option>`;
+    // Preenche Empresa
+    Array.from(empresas).sort().forEach(e => {
+        selectEmpresa.innerHTML += `<option value="${e}">${e}</option>`;
     });
 
-    selectClass.onchange = aplicarFiltrosSecundarios;
-    selectPessoa.onchange = aplicarFiltrosSecundarios;
+    // ... (mantenha o preenchimento de Classificação e Pessoa que já existe) ...
+
+    // Adiciona o evento de mudança para o novo filtro
+    selectEmpresa.onchange = aplicarFiltrosSecundarios;
 }
 
 function aplicarFiltrosSecundarios() {
     const valClass = document.getElementById("filtro-classificacao").value;
     const valPessoa = document.getElementById("filtro-pessoa").value;
+    const valEmpresa = document.getElementById("filtro-empresa").value; // Novo
 
     const filtrados = dadosGlobais.filter(item => {
         const itemClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
+        
         const matchClass = valClass === "" || itemClass === valClass;
         const matchPessoa = valPessoa === "" || item.nomePessoa === valPessoa;
-        return matchClass && matchPessoa;
+        const matchEmpresa = valEmpresa === "" || item.nomeEmpresa === valEmpresa; // Novo
+
+        return matchClass && matchPessoa && matchEmpresa;
     });
 
     renderizarTabela(filtrados, document.getElementById("filtro-tipo").value);
