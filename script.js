@@ -1,5 +1,4 @@
-let dadosGlobais = [];
-
+// Funções de utilidade
 function logDebug(mensagem) {
     const logElem = document.getElementById("debug-log");
     if (logElem) {
@@ -11,8 +10,18 @@ function logDebug(mensagem) {
     }
 }
 
-let dadosGlobais = []; // Armazena os dados do período
+function formatarMoeda(valor) {
+    return Math.abs(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
+function stringParaNumero(str) {
+    if (typeof str === 'number') return str;
+    if (!str || typeof str !== 'string') return 0;
+    let limpeza = str.replace(/[^\d,-]/g, '').replace(',', '.');
+    return parseFloat(limpeza) || 0;
+}
+
+// Função principal de busca
 async function buscarDados() {
     const corpo = document.getElementById("tabela-corpo");
     const tipo = document.getElementById("filtro-tipo").value;
@@ -20,86 +29,40 @@ async function buscarDados() {
     const dFim = document.getElementById("data-fim").value;
     
     corpo.innerHTML = '<tr><td colspan="6" style="text-align:center">Consultando Nomus...</td></tr>';
-    logDebug(`--- Nova Consulta: ${tipo} ---`);
+    logDebug(`--- Iniciando Consulta: ${tipo} ---`);
 
     try {
+        // Chamada para o servidor local (Vercel)
         const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}`;
+        
         const response = await fetch(urlLocal);
         const resultado = await response.json();
         
-        // 1. Armazena e remove duplicados (conforme sua observação anterior)
-        const listaBruta = resultado.content || [];
-        const idsVistos = new Set();
-        dadosGlobais = listaBruta.filter(item => {
-            const idUnico = item.id || item.codigo || JSON.stringify(item); 
-            if (idsVistos.has(idUnico)) return false;
-            idsVistos.add(idUnico);
-            return true;
-        });
+        // Exibe a URL que funcionou no seu teste
+        if (resultado.urlGerada) {
+            logDebug(`URL NOMUS: ${resultado.urlGerada}`);
+        }
 
-        logDebug(`Carregados ${dadosGlobais.length} registros únicos.`);
+        const lista = resultado.content || [];
+        logDebug(`Sucesso: ${lista.length} registros encontrados.`);
 
-        // 2. Preenche os novos filtros com base nos dados carregados
-        preencherFiltrosDinâmicos(dadosGlobais);
-
-        // 3. Renderiza a tabela inicial
-        aplicarFiltrosSecundarios();
+        if (lista.length === 0) {
+            corpo.innerHTML = '<tr><td colspan="6" style="text-align:center">Nenhum dado encontrado para o período.</td></tr>';
+        } else {
+            renderizarTabela(lista, tipo);
+        }
 
     } catch (error) {
         logDebug(`ERRO: ${error.message}`);
-        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red">Erro ao carregar dados.</td></tr>';
+        corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red">Erro na consulta. Verifique o Log acima.</td></tr>`;
     }
-}
-
-function preencherFiltrosDinâmicos(dados) {
-    const selectClass = document.getElementById("filtro-classificacao");
-    const selectPessoa = document.getElementById("filtro-pessoa");
-
-    // Limpa opções anteriores (mantendo a primeira "Todas")
-    selectClass.innerHTML = '<option value="">Todas</option>';
-    selectPessoa.innerHTML = '<option value="">Todas</option>';
-
-    const classificacoes = new Set();
-    const pessoas = new Set();
-
-    dados.forEach(item => {
-        const nomeClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
-        const nomePessoa = item.nomePessoa;
-        if (nomeClass) classificacoes.add(nomeClass);
-        if (nomePessoa) pessoas.add(nomePessoa);
-    });
-
-    // Adiciona as opções em ordem alfabética
-    Array.from(classificacoes).sort().forEach(c => {
-        selectClass.innerHTML += `<option value="${c}">${c}</option>`;
-    });
-    Array.from(pessoas).sort().forEach(p => {
-        selectPessoa.innerHTML += `<option value="${p}">${p}</option>`;
-    });
-
-    // Adiciona evento para filtrar quando mudar a seleção
-    selectClass.onchange = aplicarFiltrosSecundarios;
-    selectPessoa.onchange = aplicarFiltrosSecundarios;
-}
-
-function aplicarFiltrosSecundarios() {
-    const valClass = document.getElementById("filtro-classificacao").value;
-    const valPessoa = document.getElementById("filtro-pessoa").value;
-
-    const dadosFiltrados = dadosGlobais.filter(item => {
-        const itemClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
-        const matchClass = valClass === "" || itemClass === valClass;
-        const matchPessoa = valPessoa === "" || item.nomePessoa === valPessoa;
-        return matchClass && matchPessoa;
-    });
-
-    renderizarTabela(dadosFiltrados, document.getElementById("filtro-tipo").value);
 }
 
 function renderizarTabela(lista, tipo) {
     const corpo = document.getElementById("tabela-corpo");
     corpo.innerHTML = "";
     
+    // Ordenação por data de vencimento
     lista.sort((a, b) => {
         const c = (s) => { 
             const p = (s || "01/01/1900").split('/'); 
@@ -112,25 +75,36 @@ function renderizarTabela(lista, tipo) {
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
-    lista.forEach((item, index) => {
+    lista.forEach(item => {
+        // Tratamento de valores negativos (Contas a Pagar) e nomes de campos
         const vP = Math.abs(stringParaNumero(item.valorReceber || item.valorPagar));
         const vR = Math.abs(stringParaNumero(item.valorRecebido || item.valorPago));
         const vSaldo = vP - vR;
-        tPrev += vP; tReal += vR;
+
+        tPrev += vP; 
+        tReal += vR;
 
         const pD = (item.dataVencimento || "01/01/1900").split('/');
         const dVenc = new Date(pD[2], pD[1]-1, pD[0]);
+        
+        // Regra de Vencidos: Data anterior a hoje e saldo em aberto
         const vencido = dVenc < hoje && vSaldo > 0.10;
+
         if (vencido) tAtrasado += vSaldo;
 
         const tr = document.createElement("tr");
         if (vencido) tr.classList.add("linha-vencida");
 
+        // Prioriza o nome descritivo da classificação financeira
+        const descClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-';
+
         tr.innerHTML = `
-            <td style="color: #666; font-size: 0.85em;">${index + 1}</td>
-            <td>${item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-'}</td>
+            <td>${descClass}</td>
             <td>${item.nomePessoa || '-'}</td>
-            <td style="font-weight:bold">${item.dataVencimento} ${vencido ? '<span class="atraso-badge">VENCIDO</span>' : ''}</td>
+            <td style="font-weight:bold">
+                ${item.dataVencimento} 
+                ${vencido ? '<span class="atraso-badge">VENCIDO</span>' : ''}
+            </td>
             <td>${item.descricaoLancamento || '-'}</td>
             <td>${formatarMoeda(vP)}</td>
             <td>${formatarMoeda(vR)}</td>
@@ -138,19 +112,13 @@ function renderizarTabela(lista, tipo) {
         corpo.appendChild(tr);
     });
 
+    // Atualização dos cards de resumo
     document.getElementById("resumo-previsto").innerText = formatarMoeda(tPrev);
     document.getElementById("resumo-realizado").innerText = formatarMoeda(tReal);
-    document.getElementById("resumo-saldo").innerText = formatarMoeda(tPrev - tReal);
+    
+    const resSaldo = document.getElementById("resumo-saldo");
+    resSaldo.innerText = formatarMoeda(tPrev - tReal);
+    resSaldo.style.color = tipo === "contasReceber" ? "#2e7d32" : "#cf1322";
+
     document.getElementById("resumo-atrasado").innerText = formatarMoeda(tAtrasado);
-}
-
-function stringParaNumero(str) {
-    if (typeof str === 'number') return str;
-    if (!str || typeof str !== 'string') return 0;
-    let limpeza = str.replace(/[^\d,-]/g, '').replace(',', '.');
-    return parseFloat(limpeza) || 0;
-}
-
-function formatarMoeda(valor) {
-    return Math.abs(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
