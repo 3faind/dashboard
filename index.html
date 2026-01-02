@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Financeiro 3FA</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+<div id="debug-log" style="background: #000; color: #0f0; font-family: monospace; padding: 10px; font-size: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 20px; border-radius: 4px; display: none;">
+    <strong>Log de Consultas:</strong><br>
+</div>
+    
+<div class="filter-section">
+    <div>
+        <strong>Tipo:</strong>
+        <select id="filtro-tipo">
+            <option value="contasReceber">Contas a Receber</option>
+            <option value="contasPagar">Contas a Pagar</option>
+        </select>
+    </div>
+    <div>
+        <strong>De:</strong>
+        <input type="date" id="data-inicio">
+    </div>
+    <div>
+        <strong>Até:</strong>
+        <input type="date" id="data-fim">
+    </div>
+
+    <div>
+        <strong>Classificação:</strong>
+        <select id="filtro-classificacao">
+            <option value="">Todas</option>
+        </select>
+    </div>
+    <div>
+        <strong>Pessoa/Empresa:</strong>
+        <select id="filtro-pessoa">
+            <option value="">Todas</option>
+        </select>
+    </div>
+
+    <button onclick="buscarDados()">Consultar Nomus</button>
+</div>
+
+<div class="summary-box">
+    <div class="card">
+        <h3>Resumo do Período</h3>
+        <div class="total-row"><span>Previsto:</span> <span id="resumo-previsto" class="highlight">R$ 0,00</span></div>
+        <div class="total-row"><span>Realizado:</span> <span id="resumo-realizado" class="highlight">R$ 0,00</span></div>
+        <div class="total-row"><span>Saldo em Aberto:</span> <span id="resumo-saldo">R$ 0,00</span></div>
+        <div class="total-row" style="margin-top:10px; padding-top:10px; border-top:1px dashed #ccc;">
+            <strong style="color:#cf1322">Total Atrasado:</strong>
+            <strong id="resumo-atrasado" style="color:#cf1322">R$ 0,00</strong>
+        </div>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th> <th>Classificação</th>
+            <th>Pessoa</th>
+            <th>Vencimento</th>
+            <th>Descrição</th>
+            <th>Previsto</th>
+            <th>Realizado</th>
+        </tr>
+    </thead>
+    <tbody id="tabela-corpo"></tbody>
+</table>
+
+<script src="script.js"></script>
+</body>
+</html>

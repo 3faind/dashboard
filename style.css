@@ -1,0 +1,105 @@
+body { 
+  font-family: 'Segoe UI', sans-serif; 
+  background: #f4f7f6; padding: 20px; 
+}
+
+.filter-section { 
+  background: white; padding: 20px; 
+  border-radius: 8px; 
+  margin-bottom: 20px; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);   
+  display: flex; 
+  align-items: center; 
+  gap: 15px; 
+}
+
+.summary-box {  
+  display: flex; 
+  gap: 20px; 
+  margin-bottom: 20px; 
+}
+
+.card { 
+  flex: 1; 
+  background: white; 
+  padding: 20px; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+  border-top: 4px solid #1976d2; 
+}
+
+.total-row { 
+  display: flex; 
+  justify-content: space-between; 
+  margin-top: 10px; 
+  font-size: 1.1em; 
+}
+
+.highlight { 
+  font-weight: bold; 
+  color: #1976d2;   
+}
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  background: white; 
+  border-radius: 8px; 
+  overflow: hidden; 
+}
+
+th, td { 
+  padding: 12px; 
+  border: 1px solid #eee; 
+  text-align: left; 
+}
+
+th { 
+  background: #1976d2; 
+  color: white; 
+}
+
+tr:nth-child(even) { 
+  background: #fafafa; 
+}
+
+select, button { 
+  padding: 10px; 
+  border-radius: 4px; 
+  border: 1px solid #ccc; 
+  font-size: 14px; 
+}
+
+button { 
+  background: #1976d2; 
+  color: white; 
+  border: none; 
+  cursor: pointer; 
+  font-weight: bold; 
+}
+
+button:hover { 
+  background: #1565c0; 
+}
+
+
+/* Destaque de Vencidos */
+.linha-vencida { 
+  background-color: #fff1f0 !important; 
+  color: #cf1322 !important; 
+}
+
+.atraso-badge { 
+  background: #cf1322; 
+  color: white; 
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  font-size: 10px; 
+  margin-left: 5px; 
+}
+
+/* Adicione para diferenciar visualmente quando mudar o filtro */
+#resumo-saldo {
+    font-size: 1.4em;
+    font-weight: bold;
+}
