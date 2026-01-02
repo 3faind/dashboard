@@ -18,7 +18,8 @@ export default async function handler(req, res) {
       queryParams = `&query=dataVencimento>=${dIni};dataVencimento<=${dFim}`;
     }
 
-    const urlFinal = `${BASE_URL}/${endpoint}?${queryParams}`;
+    // const urlFinal = `${BASE_URL}/${endpoint}?${queryParams}`;
+    const urlFinal = `https://3fa.nomus.com.br/3fa/rest/contasReceber`;
 
     const response = await fetch(urlFinal, {
       method: "GET",
@@ -39,4 +40,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
