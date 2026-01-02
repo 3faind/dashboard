@@ -10,15 +10,15 @@ export default async function handler(req, res) {
   };
 
   try {
-    const dIni = '01/01/2026';//formatarData(dataInicio);
-    const dFim = '31/01/2026';//formatarData(dataFim);
+    const dIni = formatarData(dataInicio);
+    const dFim = formatarData(dataFim);
 
     let queryParams = "";
     if (dIni && dFim) {
       queryParams = `&query=dataVencimento>=${dIni};dataVencimento<=${dFim}`;
     }
 
-    const urlFinal = `${BASE_URL}/${endpoint}?pagina=${pagina}${queryParams}`;
+    const urlFinal = `${BASE_URL}/${endpoint}?${queryParams}`;
 
     const response = await fetch(urlFinal, {
       method: "GET",
@@ -39,4 +39,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
