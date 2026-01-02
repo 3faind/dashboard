@@ -17,35 +17,56 @@ async function buscarDados() {
     const dInicio = document.getElementById("data-inicio").value;
     const dFim = document.getElementById("data-fim").value;
     
-    corpo.innerHTML = '<tr><td colspan="7" style="text-align:center">Consultando Nomus...</td></tr>';
-    logDebug(`--- Iniciando Consulta Estável ---`);
+    corpo.innerHTML = '<tr><td colspan="7" style="text-align:center">Buscando dados no Nomus...</td></tr>';
+    logDebug(`--- Iniciando Busca Automática (Início: Pág 1) ---`);
+
+    let todasAsContas = [];
+    let paginaAtual = 1; // Ajustado: Inicia na página 1
+    let continuaBuscando = true;
+    const idsVistos = new Set();
 
     try {
-        const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}`;
-        const response = await fetch(urlLocal);
-        const resultado = await response.json();
-        
-        if (resultado.urlGerada) logDebug(`URL: ${resultado.urlGerada}`);
+        while (continuaBuscando) {
+            const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}`;
+            const response = await fetch(urlLocal);
+            const resultado = await response.json();
+            
+            const listaDaPagina = resultado.content || [];
+            
+            if (listaDaPagina.length > 0) {
+                logDebug(`Página ${paginaAtual}: +${listaDaPagina.length} itens encontrados.`);
+                logDebug(`URL: ${resultado.urlGerada}`);
 
-        const listaBruta = resultado.content || [];
-        const idsVistos = new Set();
-        
-        // Remove duplicados
-        dadosGlobais = listaBruta.filter(item => {
-            const idUnico = item.id || item.codigo || JSON.stringify(item); 
-            if (idsVistos.has(idUnico)) return false;
-            idsVistos.add(idUnico);
-            return true;
-        });
+                listaDaPagina.forEach(item => {
+                    const idUnico = item.id || item.codigo || JSON.stringify(item);
+                    if (!idsVistos.has(idUnico)) {
+                        todasAsContas.push(item);
+                        idsVistos.add(idUnico);
+                    }
+                });
 
-        logDebug(`Carregados ${dadosGlobais.length} registros únicos.`);
+                // Se retornar 50, é provável que existam mais páginas
+                if (listaDaPagina.length === 50) {
+                    paginaAtual++;
+                } else {
+                    continuaBuscando = false; // Última página (veio menos de 50)
+                }
+            } else {
+                continuaBuscando = false; // Página vazia
+            }
+
+            if (paginaAtual > 50) continuaBuscando = false; // Trava de segurança
+        }
+
+        dadosGlobais = todasAsContas;
+        logDebug(`Busca Finalizada. Total de registros: ${dadosGlobais.length}`);
 
         preencherFiltrosDinâmicos(dadosGlobais);
         aplicarFiltrosSecundarios();
 
     } catch (error) {
-        logDebug(`ERRO: ${error.message}`);
-        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao carregar dados.</td></tr>';
+        logDebug(`ERRO NO LOOP: ${error.message}`);
+        corpo.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red">Erro ao processar páginas.</td></tr>';
     }
 }
 
