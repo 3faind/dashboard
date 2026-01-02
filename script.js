@@ -17,23 +17,46 @@ async function buscarDados() {
     const dInicio = document.getElementById("data-inicio").value;
     const dFim = document.getElementById("data-fim").value;
     
-    logDebug(`--- Iniciando Consulta ---`);
+    corpo.innerHTML = '<tr><td colspan="6" style="text-align:center">Consultando Nomus...</td></tr>';
+    
+    logDebug(`--- Iniciando Processo ---`);
+
+    let todasAsContas = [];
+    let paginaAtual = 0;
+    let continuaBuscando = true;
 
     try {
-        // Esta URL local envia os dados para o servidor Vercel processar
-        const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}`;
-        
-        const response = await fetch(urlLocal);
-        const resultado = await response.json();
-        
-        // Se o servidor devolveu a urlGerada, ela aparecerá aqui no log preto
-        if (resultado.urlGerada) {
-            logDebug(`URL NOMUS: ${resultado.urlGerada}`);
+        while (continuaBuscando) {
+            // URL que chama o seu servidor na Vercel
+            const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}`;
+            
+            const response = await fetch(urlLocal);
+            const resultado = await response.json();
+            
+            // EXIBE NO LOG A URL QUE O SERVIDOR MONTOU PARA O NOMUS
+            if (resultado.urlGerada) {
+                logDebug(`URL NOMUS: ${resultado.urlGerada}`);
+            }
+
+            const listaDaPagina = resultado.content || [];
+            logDebug(`Sucesso: ${listaDaPagina.length} itens encontrados na pág ${paginaAtual}.`);
+
+            if (listaDaPagina.length > 0) {
+                todasAsContas = todasAsContas.concat(listaDaPagina);
+                paginaAtual++;
+                if (listaDaPagina.length < 50) continuaBuscando = false;
+            } else {
+                continuaBuscando = false;
+            }
+            
+            if (paginaAtual > 10) continuaBuscando = false; 
         }
 
-        // ... resto da lógica de renderização
-    } catch (e) {
-        logDebug("Erro: " + e.message);
+        renderizarTabela(todasAsContas, tipo);
+
+    } catch (error) {
+        logDebug(`ERRO: ${error.message}`);
+        corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red">Erro na consulta. Verifique o Log.</td></tr>`;
     }
 }
 
