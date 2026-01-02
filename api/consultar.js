@@ -1,4 +1,15 @@
 export default async function handler(req, res) {
+  const APP_PASSWORD = process.env.APP_PASSWORD;
+
+  // Endpoint de Validação de Senha
+  if (req.query.acao === 'login') {
+    const { senha } = req.query;
+    if (senha === APP_PASSWORD) {
+      return res.status(200).json({ autorizado: true });
+    } else {
+      return res.status(401).json({ autorizado: false });
+    }
+  }
   const BASE_URL = "https://3fa.nomus.com.br/3fa/rest";
   const AUTH_KEY = process.env.NOMUS_AUTH_KEY;
   const { endpoint, dataInicio, dataFim, pagina } = req.query; 
@@ -40,3 +51,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
