@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     }
 
     // const urlFinal = `${BASE_URL}/${endpoint}${queryParams}`;
-    const urlFinal = `${BASE_URL}/${endpoint}?${queryParams}&pagina=2`;
+    const urlFinal = `${BASE_URL}/${endpoint}?${queryParams}&pagina=1`;
 
     const response = await fetch(urlFinal, {
       method: "GET",
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 
 
