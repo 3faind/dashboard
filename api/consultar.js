@@ -17,7 +17,7 @@ export default async function handler(req, res) {
 
     let queryParams = "";
     if (dIni && dFim) {
-      queryParams = `query=dataVencimento>=${dIni};dataVencimento<=${dFim}`;
+      queryParams = `query=dataVencimento>=${dIni};dataVencimento<=${dFim}&pagina=2`;
     }
 
     // const urlFinal = `${BASE_URL}/${endpoint}${queryParams}`;
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
 
 
 
