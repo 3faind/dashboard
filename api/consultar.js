@@ -6,20 +6,23 @@ export default async function handler(req, res) {
   const formatarData = (dataISO) => {
     if (!dataISO) return null;
     const [ano, mes, dia] = dataISO.split("-");
-    return `${dia}/${mes}/${ano}`;
+    return `${dia}/${mes}/${ano}`; // Converte para DD/MM/AAAA
   };
 
   try {
     const dIni = formatarData(dataInicio);
     const dFim = formatarData(dataFim);
 
-    // Montamos a query exatamente como o Nomus exige
-    // Exemplo: ?query=dataVencimento>=01/01/2026;dataVencimento<=31/01/2026
+    // CORREÇÃO DA SINTAXE AQUI:
+    // 1. Usamos 'query='
+    // 2. Usamos o campo 'dataVencimento' (ou o campo que você validou)
+    // 3. As datas devem ser DD/MM/AAAA
     let queryParams = "";
     if (dIni && dFim) {
       queryParams = `?query=dataVencimento>=${dIni};dataVencimento<=${dFim}`;
     }
 
+    // A URL final deve ficar: BASE/endpoint?query=...
     const urlFinal = `${BASE_URL}/${endpoint}${queryParams}`;
 
     const response = await fetch(urlFinal, {
@@ -32,7 +35,6 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // Retornamos os dados e a URL final para o seu LOG PRETO ler
     return res.status(200).json({
       content: Array.isArray(data) ? data : (data.content || []),
       urlGerada: urlFinal 
