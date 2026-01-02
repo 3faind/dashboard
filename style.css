@@ -171,3 +171,19 @@ button:hover {
         margin-bottom: 20px;
     }
 }
+
+
+#debug-log {
+    background-color: #000;
+    color: #00ff00; /* Verde estilo terminal */
+    font-family: 'Courier New', Courier, monospace;
+    padding: 10px;
+    border: 1px solid #333;
+    
+    /* ALTERAÇÕES AQUI */
+    height: 200px;           /* Define uma altura fixa menor */
+    overflow-y: auto;        /* Adiciona rolagem vertical quando necessário */
+    font-size: 12px;         /* Fonte menor para caber mais informação */
+    margin-top: 15px;
+    border-radius: 4px;
+}
