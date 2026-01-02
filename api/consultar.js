@@ -10,8 +10,8 @@ export default async function handler(req, res) {
   };
 
   try {
-    const dIni = formatarData(dataInicio);
-    const dFim = formatarData(dataFim);
+    const dIni = '01/01/2026';//formatarData(dataInicio);
+    const dFim = '31/01/2026';//formatarData(dataFim);
 
     let queryParams = "";
     if (dIni && dFim) {
@@ -39,3 +39,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 }
+
