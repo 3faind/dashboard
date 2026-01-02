@@ -181,7 +181,7 @@ button:hover {
     border: 1px solid #333;
     
     /* ALTERAÇÕES AQUI */
-    height: 200px;           /* Define uma altura fixa menor */
+    height: 80px;           /* Define uma altura fixa menor */
     overflow-y: auto;        /* Adiciona rolagem vertical quando necessário */
     font-size: 12px;         /* Fonte menor para caber mais informação */
     margin-top: 15px;
