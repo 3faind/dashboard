@@ -12,6 +12,17 @@ async function buscarDados() {
     let paginaAtual = 0;
     let continuaBuscando = true;
 
+        // Dentro da função buscarDados()
+        const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&t=${new Date().getTime()}`; // 't' evita cache
+        
+        const response = await fetch(urlLocal);
+        const resultado = await response.json();
+        
+        // Verifique se você está imprimindo 'urlGerada' e não 'urlLocal'
+        if (resultado.urlGerada) {
+            logDebug(`URL ENVIADA AO NOMUS: ${resultado.urlGerada}`);
+        }
+
     try {
         while (continuaBuscando) {
             // URL que chama o seu servidor na Vercel
