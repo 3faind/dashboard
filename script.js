@@ -58,6 +58,7 @@ async function buscarDados() {
     const tipo = document.getElementById("filtro-tipo").value;
     const dInicio = document.getElementById("data-inicio").value;
     const dFim = document.getElementById("data-fim").value;
+    const senhaSalva = localStorage.getItem("app_acesso"); // <--- Pega a senha salva
     
     corpo.innerHTML = '<tr><td colspan="7" style="text-align:center">Buscando dados no Nomus...</td></tr>';
     logDebug(`--- Iniciando Busca Automática (Início: Pág 1) ---`);
@@ -69,8 +70,18 @@ async function buscarDados() {
 
     try {
         while (continuaBuscando) {
-            const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}`;
+            // INCLUÍMOS &senha=${senhaSalva} na URL
+            const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}&senha=${senhaSalva}`;
+            
             const response = await fetch(urlLocal);
+            
+            if (response.status === 401) {
+                alert("Sessão expirada ou senha inválida.");
+                localStorage.removeItem("app_acesso");
+                location.reload();
+                return;
+            }
+
             const resultado = await response.json();
             
             const listaDaPagina = resultado.content || [];
