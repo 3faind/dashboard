@@ -11,6 +11,8 @@ function logDebug(mensagem) {
     }
 }
 
+let dadosGlobais = []; // Armazena os dados do período
+
 async function buscarDados() {
     const corpo = document.getElementById("tabela-corpo");
     const tipo = document.getElementById("filtro-tipo").value;
@@ -18,53 +20,42 @@ async function buscarDados() {
     const dFim = document.getElementById("data-fim").value;
     
     corpo.innerHTML = '<tr><td colspan="6" style="text-align:center">Consultando Nomus...</td></tr>';
-    
-    logDebug(`--- Iniciando Processo ---`);
-
-    let todasAsContas = [];
-    let paginaAtual = 0;
-    let continuaBuscando = true;
+    logDebug(`--- Nova Consulta: ${tipo} ---`);
 
     try {
-        while (continuaBuscando) {
-            // URL que chama o seu servidor na Vercel
-            const urlLocal = `/api/consultar?endpoint=${tipo}?dataInicio>=${dInicio};dataFim<=${dFim}`;
-            
-            const response = await fetch(urlLocal);
-            const resultado = await response.json();
-            
-            // EXIBE NO LOG A URL QUE O SERVIDOR MONTOU PARA O NOMUS
-            if (resultado.urlGerada) {
-                logDebug(`URL NOMUS: ${resultado.urlGerada}`);
-            }
+        const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}`;
+        const response = await fetch(urlLocal);
+        const resultado = await response.json();
+        
+        // 1. Armazena e remove duplicados (conforme sua observação anterior)
+        const listaBruta = resultado.content || [];
+        const idsVistos = new Set();
+        dadosGlobais = listaBruta.filter(item => {
+            const idUnico = item.id || item.codigo || JSON.stringify(item); 
+            if (idsVistos.has(idUnico)) return false;
+            idsVistos.add(idUnico);
+            return true;
+        });
 
-            const listaDaPagina = resultado.content || [];
-            logDebug(`Sucesso: ${listaDaPagina.length} itens encontrados na pág ${paginaAtual}.`);
+        logDebug(`Carregados ${dadosGlobais.length} registros únicos.`);
 
-            if (listaDaPagina.length > 0) {
-                todasAsContas = todasAsContas.concat(listaDaPagina);
-                paginaAtual++;
-                if (listaDaPagina.length < 50) continuaBuscando = false;
-            } else {
-                continuaBuscando = false;
-            }
-            
-            if (paginaAtual > 10) continuaBuscando = false; 
-        }
+        // 2. Preenche os novos filtros com base nos dados carregados
+        preencherFiltrosDinâmicos(dadosGlobais);
 
-        renderizarTabela(todasAsContas, tipo);
+        // 3. Renderiza a tabela inicial
+        aplicarFiltrosSecundarios();
 
     } catch (error) {
         logDebug(`ERRO: ${error.message}`);
-        corpo.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red">Erro na consulta. Verifique o Log.</td></tr>`;
+        corpo.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red">Erro ao carregar dados.</td></tr>';
     }
 }
 
 function preencherFiltrosDinâmicos(dados) {
     const selectClass = document.getElementById("filtro-classificacao");
     const selectPessoa = document.getElementById("filtro-pessoa");
-    if(!selectClass || !selectPessoa) return;
 
+    // Limpa opções anteriores (mantendo a primeira "Todas")
     selectClass.innerHTML = '<option value="">Todas</option>';
     selectPessoa.innerHTML = '<option value="">Todas</option>';
 
@@ -73,10 +64,12 @@ function preencherFiltrosDinâmicos(dados) {
 
     dados.forEach(item => {
         const nomeClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
+        const nomePessoa = item.nomePessoa;
         if (nomeClass) classificacoes.add(nomeClass);
-        if (item.nomePessoa) pessoas.add(item.nomePessoa);
+        if (nomePessoa) pessoas.add(nomePessoa);
     });
 
+    // Adiciona as opções em ordem alfabética
     Array.from(classificacoes).sort().forEach(c => {
         selectClass.innerHTML += `<option value="${c}">${c}</option>`;
     });
@@ -84,6 +77,7 @@ function preencherFiltrosDinâmicos(dados) {
         selectPessoa.innerHTML += `<option value="${p}">${p}</option>`;
     });
 
+    // Adiciona evento para filtrar quando mudar a seleção
     selectClass.onchange = aplicarFiltrosSecundarios;
     selectPessoa.onchange = aplicarFiltrosSecundarios;
 }
@@ -92,14 +86,14 @@ function aplicarFiltrosSecundarios() {
     const valClass = document.getElementById("filtro-classificacao").value;
     const valPessoa = document.getElementById("filtro-pessoa").value;
 
-    const filtrados = dadosGlobais.filter(item => {
+    const dadosFiltrados = dadosGlobais.filter(item => {
         const itemClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
         const matchClass = valClass === "" || itemClass === valClass;
         const matchPessoa = valPessoa === "" || item.nomePessoa === valPessoa;
         return matchClass && matchPessoa;
     });
 
-    renderizarTabela(filtrados, document.getElementById("filtro-tipo").value);
+    renderizarTabela(dadosFiltrados, document.getElementById("filtro-tipo").value);
 }
 
 function renderizarTabela(lista, tipo) {
