@@ -116,28 +116,30 @@ function renderizarTabela(lista, tipo) {
     const corpo = document.getElementById("tabela-corpo");
     corpo.innerHTML = "";
     
-    lista.sort((a, b) => {
-        const c = (s) => { 
-            const p = (s || "01/01/1900").split('/'); 
-            return new Date(p[2], p[1]-1, p[0]); 
-        };
-        return c(a.dataVencimento) - c(b.dataVencimento);
-    });
+    // ... (mantenha a ordenação por data que já existe) ...
 
-    let tPrev = 0, tReal = 0, tAtrasado = 0;
+    let tSaldoRestante = 0, tReal = 0, tAtrasado = 0;
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
     lista.forEach((item, index) => {
-        const vP = Math.abs(stringParaNumero(item.valorReceber || item.valorPagar));
-        const vR = Math.abs(stringParaNumero(item.valorRecebido || item.valorPago));
-        const vSaldo = vP - vR;
-        tPrev += vP; tReal += vR;
+        // 1. Pegamos os valores brutos
+        const vBruto = Math.abs(stringParaNumero(item.valorReceber || item.valorPagar));
+        const vRealizado = Math.abs(stringParaNumero(item.valorRecebido || item.valorPago));
+        
+        // 2. Calculamos o SALDO (o que falta pagar/receber)
+        const vSaldoRestante = vBruto - vRealizado;
 
+        // 3. Somamos aos totais do rodapé/cards
+        tSaldoRestante += vSaldoRestante; 
+        tReal += vRealizado;
+
+        // Lógica de Vencido (baseada no saldo que restou)
         const pD = (item.dataVencimento || "01/01/1900").split('/');
         const dVenc = new Date(pD[2], pD[1]-1, pD[0]);
-        const vencido = dVenc < hoje && vSaldo > 0.10;
-        if (vencido) tAtrasado += vSaldo;
+        const vencido = dVenc < hoje && vSaldoRestante > 0.10;
+
+        if (vencido) tAtrasado += vSaldoRestante;
 
         const tr = document.createElement("tr");
         if (vencido) tr.classList.add("linha-vencida");
@@ -146,17 +148,23 @@ function renderizarTabela(lista, tipo) {
             <td style="color: #666; font-size: 0.85em;">${index + 1}</td>
             <td>${item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-'}</td>
             <td>${item.nomePessoa || '-'}</td>
-            <td style="font-weight:bold">${item.dataVencimento} ${vencido ? '<span class="atraso-badge">VENCIDO</span>' : ''}</td>
+            <td style="font-weight:bold">
+                ${item.dataVencimento} 
+                ${vencido ? '<span class="atraso-badge">VENCIDO</span>' : ''}
+            </td>
             <td>${item.descricaoLancamento || '-'}</td>
-            <td>${formatarMoeda(vP)}</td>
-            <td>${formatarMoeda(vR)}</td>
+            <td style="color: ${vSaldoRestante > 0 ? 'inherit' : '#999'}">
+                ${formatarMoeda(vSaldoRestante)}
+            </td>
+            <td>${formatarMoeda(vRealizado)}</td>
         `;
         corpo.appendChild(tr);
     });
 
-    document.getElementById("resumo-previsto").innerText = formatarMoeda(tPrev);
+    // Atualiza os cards do dashboard com os novos cálculos de abatimento
+    document.getElementById("resumo-previsto").innerText = formatarMoeda(tSaldoRestante);
     document.getElementById("resumo-realizado").innerText = formatarMoeda(tReal);
-    document.getElementById("resumo-saldo").innerText = formatarMoeda(tPrev - tReal);
+    document.getElementById("resumo-saldo").innerText = formatarMoeda(tSaldoRestante); // Saldo final
     document.getElementById("resumo-atrasado").innerText = formatarMoeda(tAtrasado);
 }
 
