@@ -116,27 +116,36 @@ function renderizarTabela(lista, tipo) {
     const corpo = document.getElementById("tabela-corpo");
     corpo.innerHTML = "";
     
-    // ... (mantenha a ordenação por data que já existe) ...
+    // 1. ORDENAÇÃO POR VENCIMENTO (Crucial para listas multi-páginas)
+    lista.sort((a, b) => {
+        const converterData = (dataStr) => { 
+            if (!dataStr) return new Date(1900, 0, 1);
+            const partes = dataStr.split('/'); 
+            // Formato esperado: DD/MM/AAAA -> Ano, Mês-1, Dia
+            return new Date(partes[2], partes[1] - 1, partes[0]); 
+        };
+        return converterData(a.dataVencimento) - converterData(b.dataVencimento);
+    });
 
     let tSaldoRestante = 0, tReal = 0, tAtrasado = 0;
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
+    // 2. RENDERIZAÇÃO APÓS ORDENAR
     lista.forEach((item, index) => {
-        // 1. Pegamos os valores brutos
         const vBruto = Math.abs(stringParaNumero(item.valorReceber || item.valorPagar));
         const vRealizado = Math.abs(stringParaNumero(item.valorRecebido || item.valorPago));
         
-        // 2. Calculamos o SALDO (o que falta pagar/receber)
+        // Cálculo do Saldo (Abatimento)
         const vSaldoRestante = vBruto - vRealizado;
 
-        // 3. Somamos aos totais do rodapé/cards
         tSaldoRestante += vSaldoRestante; 
         tReal += vRealizado;
 
-        // Lógica de Vencido (baseada no saldo que restou)
-        const pD = (item.dataVencimento || "01/01/1900").split('/');
-        const dVenc = new Date(pD[2], pD[1]-1, pD[0]);
+        const partesData = (item.dataVencimento || "01/01/1900").split('/');
+        const dVenc = new Date(partesData[2], partesData[1] - 1, partesData[0]);
+        
+        // Título está vencido se a data é menor que hoje E ainda tem saldo a pagar
         const vencido = dVenc < hoje && vSaldoRestante > 0.10;
 
         if (vencido) tAtrasado += vSaldoRestante;
@@ -144,27 +153,31 @@ function renderizarTabela(lista, tipo) {
         const tr = document.createElement("tr");
         if (vencido) tr.classList.add("linha-vencida");
 
+        const descClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-';
+
         tr.innerHTML = `
             <td style="color: #666; font-size: 0.85em;">${index + 1}</td>
-            <td>${item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-'}</td>
+            <td>${descClass}</td>
             <td>${item.nomePessoa || '-'}</td>
             <td style="font-weight:bold">
                 ${item.dataVencimento} 
                 ${vencido ? '<span class="atraso-badge">VENCIDO</span>' : ''}
             </td>
             <td>${item.descricaoLancamento || '-'}</td>
-            <td style="color: ${vSaldoRestante > 0 ? 'inherit' : '#999'}">
+            <td style="font-weight:bold; color: ${vSaldoRestante > 0 ? '#d32f2f' : '#999'}">
                 ${formatarMoeda(vSaldoRestante)}
             </td>
-            <td>${formatarMoeda(vRealizado)}</td>
+            <td style="color: #2e7d32">
+                ${formatarMoeda(vRealizado)}
+            </td>
         `;
         corpo.appendChild(tr);
     });
 
-    // Atualiza os cards do dashboard com os novos cálculos de abatimento
+    // 3. ATUALIZAÇÃO DOS CARDS DO DASHBOARD
     document.getElementById("resumo-previsto").innerText = formatarMoeda(tSaldoRestante);
     document.getElementById("resumo-realizado").innerText = formatarMoeda(tReal);
-    document.getElementById("resumo-saldo").innerText = formatarMoeda(tSaldoRestante); // Saldo final
+    document.getElementById("resumo-saldo").innerText = formatarMoeda(tSaldoRestante);
     document.getElementById("resumo-atrasado").innerText = formatarMoeda(tAtrasado);
 }
 
