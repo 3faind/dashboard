@@ -73,46 +73,63 @@ async function buscarDados() {
 function preencherFiltrosDinâmicos(dados) {
     const selectClass = document.getElementById("filtro-classificacao");
     const selectPessoa = document.getElementById("filtro-pessoa");
-    const selectEmpresa = document.getElementById("filtro-empresa"); // Novo
+    const selectEmpresa = document.getElementById("filtro-empresa");
 
-    selectClass.innerHTML = '<option value="">Todas</option>';
-    selectPessoa.innerHTML = '<option value="">Todas</option>';
-    selectEmpresa.innerHTML = '<option value="">Todas</option>'; // Novo
+    // Limpa mantendo apenas a opção "Todas"
+    if (selectClass) selectClass.innerHTML = '<option value="">Todas</option>';
+    if (selectPessoa) selectPessoa.innerHTML = '<option value="">Todas</option>';
+    if (selectEmpresa) selectEmpresa.innerHTML = '<option value="">Todas</option>';
 
     const classificacoes = new Set();
     const pessoas = new Set();
-    const empresas = new Set(); // Novo
+    const empresas = new Set();
 
+    // Varre os dados uma única vez para coletar todos os valores únicos
     dados.forEach(item => {
         const nomeClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
         if (nomeClass) classificacoes.add(nomeClass);
         if (item.nomePessoa) pessoas.add(item.nomePessoa);
-        if (item.nomeEmpresa) empresas.add(item.nomeEmpresa); // Novo
+        if (item.nomeEmpresa) empresas.add(item.nomeEmpresa);
     });
+
+    // Preenche Classificação
+    if (selectClass) {
+        Array.from(classificacoes).sort().forEach(c => {
+            selectClass.innerHTML += `<option value="${c}">${c}</option>`;
+        });
+        selectClass.onchange = aplicarFiltrosSecundarios;
+    }
+
+    // Preenche Pessoa
+    if (selectPessoa) {
+        Array.from(pessoas).sort().forEach(p => {
+            selectPessoa.innerHTML += `<option value="${p}">${p}</option>`;
+        });
+        selectPessoa.onchange = aplicarFiltrosSecundarios;
+    }
 
     // Preenche Empresa
-    Array.from(empresas).sort().forEach(e => {
-        selectEmpresa.innerHTML += `<option value="${e}">${e}</option>`;
-    });
-
-    // ... (mantenha o preenchimento de Classificação e Pessoa que já existe) ...
-
-    // Adiciona o evento de mudança para o novo filtro
-    selectEmpresa.onchange = aplicarFiltrosSecundarios;
+    if (selectEmpresa) {
+        Array.from(empresas).sort().forEach(e => {
+            selectEmpresa.innerHTML += `<option value="${e}">${e}</option>`;
+        });
+        selectEmpresa.onchange = aplicarFiltrosSecundarios;
+    }
 }
 
 function aplicarFiltrosSecundarios() {
     const valClass = document.getElementById("filtro-classificacao").value;
     const valPessoa = document.getElementById("filtro-pessoa").value;
-    const valEmpresa = document.getElementById("filtro-empresa").value; // Novo
+    const valEmpresa = document.getElementById("filtro-empresa").value;
 
     const filtrados = dadosGlobais.filter(item => {
         const itemClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao;
         
         const matchClass = valClass === "" || itemClass === valClass;
         const matchPessoa = valPessoa === "" || item.nomePessoa === valPessoa;
-        const matchEmpresa = valEmpresa === "" || item.nomeEmpresa === valEmpresa; // Novo
+        const matchEmpresa = valEmpresa === "" || item.nomeEmpresa === valEmpresa;
 
+        // O item só passa se atender aos 3 critérios simultaneamente
         return matchClass && matchPessoa && matchEmpresa;
     });
 
