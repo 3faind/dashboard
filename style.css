@@ -103,3 +103,71 @@ button:hover {
     font-size: 1.4em;
     font-weight: bold;
 }
+
+/* Estilo do botão de imprimir na tela */
+.btn-imprimir {
+    background-color: #607d8b;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+.btn-imprimir:hover {
+    background-color: #455a64;
+}
+
+/* REGRAS PARA IMPRESSÃO */
+@media print {
+    /* Esconde filtros, botões, log de debug e badges interativas */
+    header, 
+    .filtros, 
+    .btn-consulta, 
+    .btn-imprimir, 
+    #debug-log,
+    .atraso-badge {
+        display: none !important;
+    }
+
+    body {
+        background-color: white !important;
+        color: black !important;
+        padding: 0;
+    }
+
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse;
+        font-size: 10pt; /* Diminui a fonte para caber mais dados */
+    }
+
+    th, td {
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+    }
+
+    .linha-vencida {
+        background-color: #f9f9f9 !important; /* Cor clara para não gastar tinta */
+        -webkit-print-color-adjust: exact;
+    }
+    
+    /* Título do relatório na impressão */
+    body::before {
+        content: "Relatório de Fluxo de Caixa - Nomus ERP";
+        display: block;
+        text-align: center;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+}
