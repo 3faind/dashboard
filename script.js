@@ -26,8 +26,7 @@ async function buscarDados() {
     try {
         while (continuaBuscando) {
             // URL que chama o seu servidor na Vercel
-            // const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}`;
-            const urlLocal = `https://3fa.nomus.com.br/3fa/rest/contasPagar`;
+            const urlLocal = `/api/consultar?endpoint=${tipo}&dataInicio=${dInicio}&dataFim=${dFim}&pagina=${paginaAtual}`;
             
             const response = await fetch(urlLocal);
             const resultado = await response.json();
