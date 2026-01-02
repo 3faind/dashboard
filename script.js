@@ -1,3 +1,45 @@
+// No início do script.js
+document.addEventListener("DOMContentLoaded", function() {
+    verificarAcesso();
+});
+
+async function verificarAcesso() {
+    let senhaSalva = localStorage.getItem("app_acesso");
+
+    if (!senhaSalva) {
+        solicitarSenha();
+    } else {
+        validarSenhaNoServidor(senhaSalva);
+    }
+}
+
+async function solicitarSenha() {
+    const senha = prompt("Por favor, insira a senha de acesso:");
+    if (senha) {
+        validarSenhaNoServidor(senha);
+    } else {
+        document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:50px;'>Acesso Negado. Recarregue para tentar novamente.</h2>";
+    }
+}
+
+async function validarSenhaNoServidor(senha) {
+    try {
+        const response = await fetch(`/api/consultar?acao=login&senha=${senha}`);
+        const data = await response.json();
+
+        if (data.autorizado) {
+            localStorage.setItem("app_acesso", senha);
+            logDebug("Acesso autorizado com sucesso.");
+        } else {
+            localStorage.removeItem("app_acesso");
+            alert("Senha incorreta!");
+            solicitarSenha();
+        }
+    } catch (e) {
+        console.error("Erro na validação", e);
+    }
+}
+
 let dadosGlobais = [];
 
 function logDebug(mensagem) {
