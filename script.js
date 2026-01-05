@@ -230,10 +230,7 @@ function renderizarTabela(lista, tipo) {
         const tr = document.createElement("tr");
         if (vencido) tr.classList.add("linha-vencida");
 
-        // ... dentro do lista.forEach ...
-        const tr = document.createElement("tr");
-        tr.onclick = () => abrirDetalhes(item.id); // Captura o ID do lançamento
-        // ... restante da criação da linha ...
+
 
         const descClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-';
 
