@@ -228,6 +228,10 @@ function renderizarTabela(lista, tipo) {
         if (vencido) tAtrasado += vSaldoRestante;
 
         const tr = document.createElement("tr");
+
+
+        tr.onclick = () => abrirDetalhes(item.id); // Captura o ID do lançamento
+
         if (vencido) tr.classList.add("linha-vencida");
 
 
