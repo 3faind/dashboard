@@ -230,6 +230,11 @@ function renderizarTabela(lista, tipo) {
         const tr = document.createElement("tr");
         if (vencido) tr.classList.add("linha-vencida");
 
+        // ... dentro do lista.forEach ...
+        const tr = document.createElement("tr");
+        tr.onclick = () => abrirDetalhes(item.id); // Captura o ID do lançamento
+        // ... restante da criação da linha ...
+
         const descClass = item.nomeClassificacaoFinanceira || item.nomeClassificacao || item.classificacao || '-';
 
         tr.innerHTML = `
@@ -269,42 +274,37 @@ function formatarMoeda(valor) {
     return Math.abs(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/* Linha clicável */
-#tabela-corpo tr {
-    cursor: pointer;
-    transition: background 0.2s;
-}
-#tabela-corpo tr:hover {
-    background-color: #f0f0f0 !important;
+function abrirDetalhes(id) {
+    // Busca o objeto completo nos dados que já temos
+    const item = dadosGlobais.find(d => d.id === id);
+    if (!item) return;
+
+    const container = document.getElementById("detalhes-conteudo");
+    container.innerHTML = ""; // Limpa anterior
+
+    // Lista de campos que queremos exibir de forma amigável
+    // Você pode adicionar ou remover campos conforme a resposta da sua API
+    const camposOmitir = ['id', 'valorPagar', 'valorReceber', 'valorPago', 'valorRecebido'];
+    
+    // Criar uma visualização organizada
+    for (let [chave, valor] of Object.entries(item)) {
+        if (valor && typeof valor !== 'object') {
+            const div = document.createElement("div");
+            div.className = "detalhe-item";
+            div.innerHTML = `<strong>${chave}:</strong> ${valor}`;
+            container.appendChild(div);
+        }
+    }
+
+    document.getElementById("modal-detalhes").style.display = "block";
 }
 
-/* Estilo do Modal */
-.modal {
-    display: none; 
-    position: fixed; 
-    z-index: 1000; 
-    left: 0; top: 0; width: 100%; height: 100%; 
-    background-color: rgba(0,0,0,0.7);
+function fecharModal() {
+    document.getElementById("modal-detalhes").style.display = "none";
 }
-.modal-content {
-    background-color: #fff;
-    margin: 5% auto;
-    padding: 20px;
-    border-radius: 8px;
-    width: 60%;
-    max-height: 80vh;
-    overflow-y: auto;
-    color: #333;
+
+// Fechar se clicar fora do modal
+window.onclick = function(event) {
+    const modal = document.getElementById("modal-detalhes");
+    if (event.target == modal) fecharModal();
 }
-.close-modal {
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.detalhe-item {
-    margin-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-.detalhe-item strong { color: #555; }
